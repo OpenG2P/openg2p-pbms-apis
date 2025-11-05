@@ -2,8 +2,9 @@ import logging
 from typing import Annotated
 
 from fastapi import Depends
-from openg2p_fastapi_auth.beneficiary_token import BeneficiaryToken
-from openg2p_fastapi_auth.models.credentials import AuthCredentials
+from openg2p_fastapi_auth.auth import AuthFactory
+from openg2p_fastapi_auth_models.schemas import AuthCredentials
+
 from openg2p_fastapi_common.controller import BaseController
 from openg2p_pbms_models.errors import PBMSException
 from openg2p_pbms_models.schemas import (
@@ -49,7 +50,7 @@ class BenefitProgramController(BaseController):
     async def get_my_programs(
         self,
         benefit_program_request: BenefitProgramRequest,
-        auth_credentials: Annotated[AuthCredentials, Depends(BeneficiaryToken())],
+        auth_credentials: Annotated[AuthCredentials, Depends(AuthFactory())],
     ) -> BenefitProgramResponse:
         _logger.debug("Get My Programs Request: %s", benefit_program_request)
         try:
@@ -78,7 +79,7 @@ class BenefitProgramController(BaseController):
     async def get_all_programs(
         self,
         benefit_program_request: BenefitProgramRequest,
-        auth_credentials: Annotated[AuthCredentials, Depends(BeneficiaryToken())],
+        auth_credentials: Annotated[AuthCredentials, Depends(AuthFactory())],
     ) -> BenefitProgramResponse:
         _logger.debug("Get All Programs Request: %s", benefit_program_request)
         try:
@@ -107,7 +108,7 @@ class BenefitProgramController(BaseController):
     async def get_program(
         self,
         benefit_program_request: BenefitProgramRequest,
-        auth_credentials: Annotated[AuthCredentials, Depends(BeneficiaryToken())],
+        auth_credentials: Annotated[AuthCredentials, Depends(AuthFactory())],
     ) -> BenefitProgramDetailResponse:
         _logger.debug("Get Program Request: %s", benefit_program_request)
         try:
