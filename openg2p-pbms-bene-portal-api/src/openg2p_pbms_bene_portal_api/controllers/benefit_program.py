@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import Depends
 from openg2p_fastapi_auth.auth import AuthFactory
 from openg2p_fastapi_auth_models.schemas import AuthCredentials
-
 from openg2p_fastapi_common.controller import BaseController
 from openg2p_pbms_models.errors import PBMSException
 from openg2p_pbms_models.schemas import (
