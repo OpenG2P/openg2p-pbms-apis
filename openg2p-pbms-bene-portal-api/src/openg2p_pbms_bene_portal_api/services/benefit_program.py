@@ -111,17 +111,11 @@ class BenefitProgramService(BaseService):
         # Step 1: Fetch all programs
         async with session_maker_pbms() as session_pbms:
             all_g2p_program_definitions = (
-                (
-                    await session_pbms.execute(
-                        select(G2PProgramDefinition)
-                    )
-                )
+                (await session_pbms.execute(select(G2PProgramDefinition)))
                 .scalars()
                 .all()
             )
-        _logger.info(
-            f"Found {len(all_g2p_program_definitions)} total programs"
-        )
+        _logger.info(f"Found {len(all_g2p_program_definitions)} total programs")
         # Step 2: for each program, find latest approved list and check membership
         enrolled_programs: List[BenefitProgram] = []
         async with session_maker_pbms() as session_pbms, session_maker_bg() as session_bg:
@@ -186,7 +180,7 @@ class BenefitProgramService(BaseService):
         total_count = len(enrolled_programs)
         total_pages = (total_count + page_size - 1) // page_size
         offset = (current_page - 1) * page_size
-        paginated_programs = enrolled_programs[offset: offset + page_size]
+        paginated_programs = enrolled_programs[offset : offset + page_size]
 
         return await self.construct_benefit_program_success_response(
             benefit_program_request, paginated_programs, total_count, total_pages
