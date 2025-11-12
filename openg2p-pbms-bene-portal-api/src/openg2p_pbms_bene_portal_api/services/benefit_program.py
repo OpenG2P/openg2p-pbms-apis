@@ -100,7 +100,6 @@ class BenefitProgramService(BaseService):
         # Extract pagination parameters
         page_size = pagination.page_size if pagination else 10
         current_page = pagination.current_page if pagination else 1
-        offset = (current_page - 1) * page_size
 
         session_maker_pbms = async_sessionmaker(
             bind=_engine.get("db_engine_pbms"), expire_on_commit=False
@@ -109,73 +108,69 @@ class BenefitProgramService(BaseService):
             bind=_engine.get("db_engine_bg_task"), expire_on_commit=False
         )
 
-        # Step 1: page programs
+        # Step 1: Fetch all programs
         async with session_maker_pbms() as session_pbms:
-            total_count_result = await session_pbms.execute(
-                select(func.count(G2PProgramDefinition.id))
-            )
-            total_count_result.scalar()
-            g2p_program_definitions = (
+            all_g2p_program_definitions = (
                 (
                     await session_pbms.execute(
-                        select(G2PProgramDefinition).offset(offset).limit(page_size)
+                        select(G2PProgramDefinition)
                     )
                 )
                 .scalars()
                 .all()
             )
         _logger.info(
-            f"Found {len(g2p_program_definitions)} programs in page {current_page} with page size {page_size}"
+            f"Found {len(all_g2p_program_definitions)} total programs"
         )
         # Step 2: for each program, find latest approved list and check membership
-        benefit_programs: List[BenefitProgram] = []
+        enrolled_programs: List[BenefitProgram] = []
         async with session_maker_pbms() as session_pbms, session_maker_bg() as session_bg:
-            for g2p_program_definition in g2p_program_definitions:
+            for g2p_program_definition in all_g2p_program_definitions:
                 am_i_enrolled, enrolment_date = await self._get_enrollment_status(
                     session_pbms, session_bg, g2p_program_definition.id, beneficiary_id
                 )
                 _logger.info(
                     f"Program {g2p_program_definition.program_mnemonic}: am_i_enrolled={am_i_enrolled}, enrolment_date={enrolment_date}"
                 )
-                # fetch benefit codes for this program
-                g2p_benefit_codes_from_db = (
-                    await session_pbms.execute(
-                        select(
-                            G2PBenefitCodes.id,
-                            G2PBenefitCodes.benefit_mnemonic,
-                            G2PBenefitCodes.benefit_type,
-                            G2PBenefitCodes.benefit_description,
-                            G2PBenefitCodes.measurement_unit,
-                            G2PProgramBenefitCodes.max_quantity,
-                        )
-                        .join(
-                            G2PProgramBenefitCodes,
-                            G2PProgramBenefitCodes.benefit_code_id
-                            == G2PBenefitCodes.id,
-                        )
-                        .where(
-                            G2PProgramBenefitCodes.program_id
-                            == g2p_program_definition.id
-                        )
-                    )
-                ).all()
-                _logger.info(
-                    f"Found {len(g2p_benefit_codes_from_db)} benefit codes for program {g2p_program_definition.program_mnemonic}"
-                )
-                benefit_codes = [
-                    {
-                        "id": benefit_code.id,
-                        "benefit_code_mnemonic": benefit_code.benefit_mnemonic,
-                        "benefit_type": benefit_code.benefit_type,
-                        "benefit_code_description": benefit_code.benefit_description,
-                        "benefit_code_max_quantity": benefit_code.max_quantity,
-                        "measurement_unit": benefit_code.measurement_unit,
-                    }
-                    for benefit_code in g2p_benefit_codes_from_db
-                ]
-
                 if am_i_enrolled:
-                    benefit_programs.append(
+                    # fetch benefit codes for this program
+                    g2p_benefit_codes_from_db = (
+                        await session_pbms.execute(
+                            select(
+                                G2PBenefitCodes.id,
+                                G2PBenefitCodes.benefit_mnemonic,
+                                G2PBenefitCodes.benefit_type,
+                                G2PBenefitCodes.benefit_description,
+                                G2PBenefitCodes.measurement_unit,
+                                G2PProgramBenefitCodes.max_quantity,
+                            )
+                            .join(
+                                G2PProgramBenefitCodes,
+                                G2PProgramBenefitCodes.benefit_code_id
+                                == G2PBenefitCodes.id,
+                            )
+                            .where(
+                                G2PProgramBenefitCodes.program_id
+                                == g2p_program_definition.id
+                            )
+                        )
+                    ).all()
+                    _logger.info(
+                        f"Found {len(g2p_benefit_codes_from_db)} benefit codes for program {g2p_program_definition.program_mnemonic}"
+                    )
+                    benefit_codes = [
+                        {
+                            "id": benefit_code.id,
+                            "benefit_code_mnemonic": benefit_code.benefit_mnemonic,
+                            "benefit_type": benefit_code.benefit_type,
+                            "benefit_code_description": benefit_code.benefit_description,
+                            "benefit_code_max_quantity": benefit_code.max_quantity,
+                            "measurement_unit": benefit_code.measurement_unit,
+                        }
+                        for benefit_code in g2p_benefit_codes_from_db
+                    ]
+
+                    enrolled_programs.append(
                         BenefitProgram(
                             id=g2p_program_definition.id,
                             program_name=g2p_program_definition.description,
@@ -187,12 +182,14 @@ class BenefitProgramService(BaseService):
                         )
                     )
 
-        # pagination reflects only enrolled programs in the current page window
-        total_count = len(benefit_programs)
+        # Step 3: Apply pagination AFTER filtering for enrolled programs
+        total_count = len(enrolled_programs)
         total_pages = (total_count + page_size - 1) // page_size
+        offset = (current_page - 1) * page_size
+        paginated_programs = enrolled_programs[offset: offset + page_size]
 
         return await self.construct_benefit_program_success_response(
-            benefit_program_request, benefit_programs, total_count, total_pages
+            benefit_program_request, paginated_programs, total_count, total_pages
         )
 
     async def construct_benefit_program_success_response(
