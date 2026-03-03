@@ -4,7 +4,6 @@ from datetime import datetime
 
 from openg2p_bg_task_models.schemas import (
     BeneficiarySearchRequest,
-    BeneficiarySearchRequestPayload,
     BeneficiarySearchResponse,
     BeneficiarySearchResponseBody,
     BeneficiarySearchResponsePayload,
@@ -31,7 +30,9 @@ class BeneficiarySearchService(BaseService):
     async def search_beneficiaries(
         self, beneficiary_search_request: BeneficiarySearchRequest
     ) -> BeneficiarySearchResponse:
-        beneficiary_search_request_payload = beneficiary_search_request.request_body.request_payload
+        beneficiary_search_request_payload = (
+            beneficiary_search_request.request_body.request_payload
+        )
         pagination_request = beneficiary_search_request.request_body.pagination_request
 
         session_maker = async_sessionmaker(
@@ -48,22 +49,25 @@ class BeneficiarySearchService(BaseService):
                         beneficiary_search_request_payload.target_registry
                     )
                 )
-                beneficiary_search_response_payload, total_count = (
-                    await registry_interface.search_beneficiaries(
-                        session,
-                        sr_session,
-                        beneficiary_search_request_payload.beneficiary_list_id,
-                        beneficiary_search_request_payload.target_registry,
-                        pagination_request.search_text,
-                        pagination_request.current_page,
-                        pagination_request.page_size,
-                        pagination_request.sort_by,
-                    )
+                (
+                    beneficiary_search_response_payload,
+                    total_count,
+                ) = await registry_interface.search_beneficiaries(
+                    session,
+                    sr_session,
+                    beneficiary_search_request_payload.beneficiary_list_id,
+                    beneficiary_search_request_payload.target_registry,
+                    pagination_request.search_text,
+                    pagination_request.current_page,
+                    pagination_request.page_size,
+                    pagination_request.sort_by,
                 )
 
                 # Build pagination response
                 page_size = pagination_request.page_size if pagination_request else 10
-                number_of_pages = math.ceil(total_count / page_size) if page_size > 0 else 0
+                number_of_pages = (
+                    math.ceil(total_count / page_size) if page_size > 0 else 0
+                )
                 pagination_response = G2PPaginationResponse(
                     number_of_items=total_count,
                     number_of_pages=number_of_pages,
@@ -99,8 +103,7 @@ class BeneficiarySearchService(BaseService):
             ),
             response_body=BeneficiarySearchResponseBody(
                 response_payload=BeneficiarySearchResponsePayload(
-                    beneficiary_count=0,
-                    beneficiaries=[]
+                    beneficiary_count=0, beneficiaries=[]
                 ),
             ),
         )

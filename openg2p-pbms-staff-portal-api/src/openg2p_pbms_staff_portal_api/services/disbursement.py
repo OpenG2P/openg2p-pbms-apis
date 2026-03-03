@@ -101,7 +101,7 @@ class DisbursementEnvelopeService(BaseService):
             response_body=DisbursementEnvelopeResponseBody(
                 response_payload=DisbursementEnvelopeResponsePayload(
                     beneficiary_list_id=disbursement_envelope_request.request_payload.beneficiary_list_id,
-                    disbursement_envelopes=[]
+                    disbursement_envelopes=[],
                 ),
             ),
         )

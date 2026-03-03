@@ -4,7 +4,6 @@ from openg2p_bg_task_models.errors import BGTaskException
 from openg2p_bg_task_models.schemas import (
     BeneficiarySearchRequest,
     BeneficiarySearchResponse,
-    BeneficiarySearchResponsePayload,
 )
 from openg2p_fastapi_common.controller import BaseController
 
