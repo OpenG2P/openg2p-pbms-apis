@@ -8,17 +8,19 @@ from openg2p_bg_task_models.schemas import (
     DisbursementBatchRequest,
     DisbursementBatchRequestPayload,
     DisbursementBatchResponse,
+    DisbursementBatchResponseBody,
     DisbursementBatchResponsePayload,
     DisbursementEnvelopeRequest,
     DisbursementEnvelopeRequestPayload,
     DisbursementEnvelopeResponse,
+    DisbursementEnvelopeResponseBody,
     DisbursementEnvelopeResponsePayload,
 )
-from openg2p_fastapi_common.service import BaseService
-from openg2p_g2pconnect_common_lib.schemas import (
-    StatusEnum,
-    SyncResponseHeader,
+from openg2p_fastapi_common.schemas import (
+    G2PResponseHeader,
+    G2PResponseStatus,
 )
+from openg2p_fastapi_common.service import BaseService
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from ..config import Settings
@@ -73,13 +75,14 @@ class DisbursementEnvelopeService(BaseService):
         disbursement_envelope_response_payload: DisbursementEnvelopeResponsePayload,
     ) -> DisbursementEnvelopeResponse:
         disbursement_envelope_response = DisbursementEnvelopeResponse(
-            header=SyncResponseHeader(
-                message_id=disbursement_envelope_request.header.message_id,
-                message_ts=datetime.now().isoformat(),
-                action=disbursement_envelope_request.header.action,
-                status=StatusEnum.succ,
+            response_header=G2PResponseHeader(
+                request_id=disbursement_envelope_request.request_header.request_id,
+                response_timestamp=datetime.now(),
+                response_status=G2PResponseStatus.SUCCESS,
             ),
-            message=disbursement_envelope_response_payload,
+            response_body=DisbursementEnvelopeResponseBody(
+                response_payload=disbursement_envelope_response_payload,
+            ),
         )
         return disbursement_envelope_response
 
@@ -89,14 +92,18 @@ class DisbursementEnvelopeService(BaseService):
         error_code: str,
     ) -> DisbursementEnvelopeResponse:
         disbursement_envelope_response = DisbursementEnvelopeResponse(
-            header=SyncResponseHeader(
-                message_id=disbursement_envelope_request.header.message_id,
-                message_ts=datetime.now().isoformat(),
-                action=disbursement_envelope_request.header.action,
-                status=StatusEnum.rjct,
-                status_reason_message=error_code,
+            response_header=G2PResponseHeader(
+                request_id=disbursement_envelope_request.request_header.request_id,
+                response_timestamp=datetime.now(),
+                response_status=G2PResponseStatus.ERROR,
+                response_error_code=error_code,
             ),
-            message={},
+            response_body=DisbursementEnvelopeResponseBody(
+                response_payload=DisbursementEnvelopeResponsePayload(
+                    beneficiary_list_id=disbursement_envelope_request.request_payload.beneficiary_list_id,
+                    disbursement_envelopes=[]
+                ),
+            ),
         )
         return disbursement_envelope_response
 
@@ -143,13 +150,14 @@ class DisbursementBatchService(BaseService):
         disbursement_batch_response_payload: DisbursementBatchResponsePayload,
     ) -> DisbursementBatchResponse:
         disbursement_batch_response = DisbursementBatchResponse(
-            header=SyncResponseHeader(
-                message_id=disbursement_batch_request.header.message_id,
-                message_ts=datetime.now().isoformat(),
-                action=disbursement_batch_request.header.action,
-                status=StatusEnum.succ,
+            response_header=G2PResponseHeader(
+                request_id=disbursement_batch_request.request_header.request_id,
+                response_timestamp=datetime.now(),
+                response_status=G2PResponseStatus.SUCCESS,
             ),
-            message=disbursement_batch_response_payload,
+            response_body=DisbursementBatchResponseBody(
+                response_payload=disbursement_batch_response_payload,
+            ),
         )
         return disbursement_batch_response
 
@@ -157,13 +165,16 @@ class DisbursementBatchService(BaseService):
         self, disbursement_batch_request: DisbursementBatchRequest, error_code: str
     ) -> DisbursementBatchResponse:
         disbursement_batch_response = DisbursementBatchResponse(
-            header=SyncResponseHeader(
-                message_id=disbursement_batch_request.header.message_id,
-                message_ts=datetime.now().isoformat(),
-                action=disbursement_batch_request.header.action,
-                status=StatusEnum.rjct,
-                status_reason_message=error_code,
+            response_header=G2PResponseHeader(
+                request_id=disbursement_batch_request.request_header.request_id,
+                response_timestamp=datetime.now(),
+                response_status=G2PResponseStatus.ERROR,
+                response_error_code=error_code,
             ),
-            message={},
+            response_body=DisbursementBatchResponseBody(
+                response_payload=DisbursementBatchResponsePayload(
+                    disbursement_batches=[],
+                ),
+            ),
         )
         return disbursement_batch_response

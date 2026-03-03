@@ -35,13 +35,10 @@ class BeneficiarySearchController(BaseController):
         _logger.debug("Beneficiary Search Request: %s", beneficiary_search_request)
 
         try:
-            beneficiary_search_response_payload: BeneficiarySearchResponsePayload = (
+            beneficiary_search_response: BeneficiarySearchResponse = (
                 await self.beneficiary_search_service.search_beneficiaries(
-                    beneficiary_search_request.message
+                    beneficiary_search_request
                 )
-            )
-            beneficiary_search_response: BeneficiarySearchResponse = await self.beneficiary_search_service.construct_beneficiary_search_success_response(
-                beneficiary_search_request, beneficiary_search_response_payload
             )
             _logger.info("Beneficiaries retrieved successfully")
             _logger.debug(

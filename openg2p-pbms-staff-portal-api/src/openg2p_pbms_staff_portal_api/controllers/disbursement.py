@@ -49,7 +49,7 @@ class DisbursementController(BaseController):
 
         try:
             disbursement_envelope_response_payload: DisbursementEnvelopeResponsePayload = await self.disbursement_envelope_service.disbursement_envelope(
-                disbursement_envelope_request.message
+                disbursement_envelope_request.request_body.request_payload
             )
             disbursement_envelope_response: DisbursementEnvelopeResponse = await self.disbursement_envelope_service.construct_disbursement_envelope_success_response(
                 disbursement_envelope_request, disbursement_envelope_response_payload
@@ -74,7 +74,7 @@ class DisbursementController(BaseController):
         try:
             disbursement_batch_response_payload: DisbursementBatchResponsePayload = (
                 await self.disbursement_batch_service.disbursement_batch(
-                    disbursement_batch_request.message
+                    disbursement_batch_request.request_body.request_payload
                 )
             )
             disbursement_batch_response: DisbursementBatchResponse = await self.disbursement_batch_service.construct_disbursement_batch_success_response(
