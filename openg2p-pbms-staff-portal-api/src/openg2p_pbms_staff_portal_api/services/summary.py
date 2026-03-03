@@ -90,7 +90,10 @@ class SummaryService(BaseService):
                 response_error_code=error_code,
             ),
             response_body=SummaryResponseBody(
-                response_payload=SummaryResponsePayload(),
+                response_payload=SummaryResponsePayload(
+                    beneficiary_list_id=summary_request.request_body.request_payload.beneficiary_list_id,
+                    summary=None,
+                ),
             ),
         )
 
