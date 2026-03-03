@@ -56,7 +56,7 @@ class BeneficiarySearchService(BaseService):
                         beneficiary_search_request_payload.target_registry,
                         pagination_request.current_page,
                         pagination_request.page_size,
-                        pagination_request.order_by,
+                        pagination_request.sort_by,
                         pagination_request.search_text,
                     )
                 )
