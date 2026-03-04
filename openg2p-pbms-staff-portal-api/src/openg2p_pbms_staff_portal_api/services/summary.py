@@ -2,22 +2,23 @@ import logging
 from datetime import datetime
 
 from openg2p_bg_task_models.errors import BGTaskErrorCodes, BGTaskException
-from openg2p_bg_task_models.models import BeneficiaryListSummary
 from openg2p_bg_task_models.schemas import (
     SummaryRequest,
     SummaryRequestPayload,
     SummaryResponse,
+    SummaryResponseBody,
+    SummaryResponsePayload,
 )
 from openg2p_bg_task_registry_adapters.factory import RegistryFactory
 from openg2p_bg_task_registry_adapters.interface import RegistryInterface
 from openg2p_bg_task_registry_adapters.schema import (
     BeneficiaryListSummaryPayload,
 )
-from openg2p_fastapi_common.service import BaseService
-from openg2p_g2pconnect_common_lib.schemas import (
-    StatusEnum,
-    SyncResponseHeader,
+from openg2p_fastapi_common.schemas import (
+    G2PResponseHeader,
+    G2PResponseStatus,
 )
+from openg2p_fastapi_common.service import BaseService
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from ..config import Settings
@@ -31,7 +32,7 @@ _engine = get_engine()
 class SummaryService(BaseService):
     async def get_summary(
         self, summary_request_payload: SummaryRequestPayload
-    ) -> BeneficiaryListSummary:
+    ) -> SummaryResponsePayload:
         session_maker = async_sessionmaker(
             bind=_engine.get("db_engine_bg_task"), expire_on_commit=False
         )
@@ -49,7 +50,10 @@ class SummaryService(BaseService):
                         formated=True,
                     )
                 )
-                return beneficiary_list_summary_payload
+                return SummaryResponsePayload(
+                    beneficiary_list_id=summary_request_payload.beneficiary_list_id,
+                    summary=beneficiary_list_summary_payload,
+                )
 
             except Exception as e:
                 _logger.error(f"Error fetching beneficiary list summary : {e}")
@@ -61,16 +65,17 @@ class SummaryService(BaseService):
     async def construct_summary_success_response(
         self,
         summary_request: SummaryRequest,
-        beneficiary_list_summary_payload: BeneficiaryListSummaryPayload,
+        summary_response_payload: SummaryResponsePayload,
     ) -> SummaryResponse:
         response = SummaryResponse(
-            header=SyncResponseHeader(
-                message_id=summary_request.header.message_id,
-                message_ts=datetime.now().isoformat(),
-                action=summary_request.header.action,
-                status=StatusEnum.succ,
+            response_header=G2PResponseHeader(
+                request_id=summary_request.request_header.request_id,
+                response_timestamp=datetime.now(),
+                response_status=G2PResponseStatus.SUCCESS,
             ),
-            message=beneficiary_list_summary_payload,
+            response_body=SummaryResponseBody(
+                response_payload=summary_response_payload,
+            ),
         )
         return response
 
@@ -78,14 +83,18 @@ class SummaryService(BaseService):
         self, summary_request: SummaryRequest, error_code: str
     ) -> SummaryResponse:
         response = SummaryResponse(
-            header=SyncResponseHeader(
-                message_id=summary_request.header.message_id,
-                message_ts=datetime.now().isoformat(),
-                action=summary_request.header.action,
-                status=StatusEnum.rjct,
-                status_reason_message=error_code,
+            response_header=G2PResponseHeader(
+                request_id=summary_request.request_header.request_id,
+                response_timestamp=datetime.now(),
+                response_status=G2PResponseStatus.ERROR,
+                response_error_code=error_code,
             ),
-            message={},
+            response_body=SummaryResponseBody(
+                response_payload=SummaryResponsePayload(
+                    beneficiary_list_id=summary_request.request_body.request_payload.beneficiary_list_id,
+                    summary=None,
+                ),
+            ),
         )
 
         return response

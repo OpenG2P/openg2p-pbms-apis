@@ -1,10 +1,10 @@
 import logging
 
 from openg2p_bg_task_models.errors import BGTaskException
-from openg2p_bg_task_models.models import BeneficiaryListSummary
 from openg2p_bg_task_models.schemas import (
     SummaryRequest,
     SummaryResponse,
+    SummaryResponsePayload,
 )
 from openg2p_fastapi_common.controller import BaseController
 
@@ -33,12 +33,14 @@ class SummaryController(BaseController):
         _logger.debug("Beneficiary List Summary Request: %s", summary_request)
 
         try:
-            beneficiary_list_summary: BeneficiaryListSummary = (
-                await self.summary_service.get_summary(summary_request.message)
+            summary_response_payload: SummaryResponsePayload = (
+                await self.summary_service.get_summary(
+                    summary_request.request_body.request_payload
+                )
             )
             summary_response: SummaryResponse = (
                 await self.summary_service.construct_summary_success_response(
-                    summary_request, beneficiary_list_summary
+                    summary_request, summary_response_payload
                 )
             )
             _logger.info("Eligibility summary retrieved successfully")
