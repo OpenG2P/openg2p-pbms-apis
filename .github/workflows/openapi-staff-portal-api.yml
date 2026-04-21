@@ -31,6 +31,7 @@ jobs:
           python -m pip install git+https://github.com/OpenG2P/openg2p-pbms-gen2-bg-tasks@v3.1.0\#subdirectory=openg2p-pbms-models
           python -m pip install git+https://github.com/OpenG2P/openg2p-pbms-gen2-bg-tasks@v3.1.0\#subdirectory=openg2p-bg-task-models
           python -m pip install git+https://github.com/OpenG2P/openg2p-pbms-bg-tasks-extensions@v3.0.0\#subdirectory=openg2p-bg-task-registry-adapters
+          python -m pip install jinja2
           python -m pip install .
       - name: Generate openapi json
         run: |
