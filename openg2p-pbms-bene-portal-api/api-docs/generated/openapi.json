@@ -11,7 +11,7 @@
       "name": "Mozilla Public License 2.0",
       "url": "https://www.mozilla.org/en-US/MPL/2.0/"
     },
-    "version": "1.1.4"
+    "version": "1.1.6"
   },
   "paths": {
     "/benefit_program/get_my_programs": {
@@ -95,7 +95,7 @@
         },
         "security": [
           {
-            "BeneficiaryToken": []
+            "JwtBearerAuth": []
           }
         ]
       }
@@ -181,7 +181,7 @@
         },
         "security": [
           {
-            "BeneficiaryToken": []
+            "JwtBearerAuth": []
           }
         ]
       }
@@ -267,7 +267,7 @@
         },
         "security": [
           {
-            "BeneficiaryToken": []
+            "JwtBearerAuth": []
           }
         ]
       }
@@ -812,6 +812,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
@@ -824,7 +831,7 @@
       }
     },
     "securitySchemes": {
-      "BeneficiaryToken": {
+      "JwtBearerAuth": {
         "type": "http",
         "scheme": "bearer"
       }
